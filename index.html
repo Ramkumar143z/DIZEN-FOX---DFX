@@ -1,0 +1,1879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#000000">
+<title>DFX — GMP Lead Management</title>
+<link rel="manifest" href="data:application/json,{%22name%22:%22DFX%22,%22short_name%22:%22DFX%22,%22display%22:%22standalone%22,%22background_color%22:%22%23000000%22}">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syncopate:wght@400;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap');
+
+  :root {
+    --bg: #000000;
+    --surface: #0a0a0a;
+    --surface2: #111111;
+    --surface3: #1a1a1a;
+    --border: rgba(255,255,255,0.08);
+    --border-hover: rgba(255,255,255,0.2);
+    --text: #f0f0f0;
+    --text-muted: #555;
+    --text-dim: #888;
+    --accent: #ffffff;
+    --accent-dim: rgba(255,255,255,0.06);
+    --glow: rgba(255,255,255,0.04);
+    --green: #22c55e;
+    --yellow: #eab308;
+    --blue: #3b82f6;
+    --red: #ef4444;
+    --orange: #f97316;
+    --glass: rgba(255,255,255,0.03);
+    --glass-border: rgba(255,255,255,0.07);
+    --radius: 12px;
+    --radius-lg: 18px;
+    --shadow: 0 8px 32px rgba(0,0,0,0.6);
+    --shadow-lg: 0 20px 60px rgba(0,0,0,0.8);
+    --navbar-h: 64px;
+    --font-display: 'Syncopate', sans-serif;
+    --font-mono: 'Space Mono', monospace;
+    --font-body: 'DM Sans', sans-serif;
+    --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  body.light {
+    --bg: #f5f5f5;
+    --surface: #ffffff;
+    --surface2: #f0f0f0;
+    --surface3: #e8e8e8;
+    --border: rgba(0,0,0,0.08);
+    --border-hover: rgba(0,0,0,0.2);
+    --text: #111111;
+    --text-muted: #aaa;
+    --text-dim: #666;
+    --accent: #000000;
+    --accent-dim: rgba(0,0,0,0.06);
+    --glow: rgba(0,0,0,0.04);
+    --glass: rgba(0,0,0,0.02);
+    --glass-border: rgba(0,0,0,0.07);
+    --shadow: 0 8px 32px rgba(0,0,0,0.12);
+    --shadow-lg: 0 20px 60px rgba(0,0,0,0.18);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    transition: background 0.35s, color 0.35s;
+  }
+
+  /* ── NOISE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    background-size: 150px;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.5;
+  }
+
+  /* ── NAVBAR ── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: var(--navbar-h);
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    z-index: 1000;
+    transition: background 0.35s;
+  }
+  body.light nav { background: rgba(255,255,255,0.88); }
+
+  .nav-left { display: flex; align-items: center; gap: 16px; }
+
+  .nav-logo {
+    height: 36px;
+    width: auto;
+    object-fit: contain;
+    filter: brightness(1);
+    transition: opacity 0.2s;
+  }
+  .nav-logo:hover { opacity: 0.8; }
+
+  .nav-divider {
+    width: 1px;
+    height: 24px;
+    background: var(--border);
+  }
+
+  .nav-brand {
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--text);
+    text-transform: uppercase;
+  }
+
+  .nav-center {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .nav-btn {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 7px 14px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all var(--transition);
+    position: relative;
+    white-space: nowrap;
+  }
+  .nav-btn:hover { color: var(--text); background: var(--accent-dim); border-color: var(--border-hover); }
+  .nav-btn.active {
+    color: var(--accent);
+    background: var(--accent-dim);
+    border-color: var(--border-hover);
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 8px;
+    background: var(--red);
+    color: #fff;
+    font-size: 9px;
+    font-family: var(--font-mono);
+    font-weight: 700;
+    margin-left: 6px;
+    animation: pulse-badge 2s infinite;
+  }
+  @keyframes pulse-badge {
+    0%, 100% { opacity: 1; } 50% { opacity: 0.6; }
+  }
+
+  .nav-right { display: flex; align-items: center; gap: 10px; }
+
+  .icon-btn {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--glass);
+    color: var(--text-dim);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all var(--transition);
+  }
+  .icon-btn:hover { color: var(--text); border-color: var(--border-hover); background: var(--accent-dim); }
+
+  /* ── MAIN LAYOUT ── */
+  main {
+    margin-top: var(--navbar-h);
+    padding: 28px 24px;
+    max-width: 1600px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-top: calc(var(--navbar-h) + 28px);
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── PAGES ── */
+  .page { display: none; animation: fadeSlide 0.3s ease; }
+  .page.active { display: block; }
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── PAGE HEADER ── */
+  .page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .page-title {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text);
+  }
+
+  .page-subtitle {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 4px;
+    font-family: var(--font-mono);
+  }
+
+  /* ── STAT CARDS ── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    backdrop-filter: blur(12px);
+    transition: all var(--transition);
+    cursor: default;
+  }
+  .stat-card:hover { border-color: var(--border-hover); transform: translateY(-2px); }
+
+  .stat-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  .stat-value {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  .stat-card.green .stat-value { color: var(--green); }
+  .stat-card.yellow .stat-value { color: var(--yellow); }
+  .stat-card.blue .stat-value { color: var(--blue); }
+  .stat-card.red .stat-value { color: var(--red); }
+
+  /* ── TOOLBAR ── */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  .search-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 220px;
+    max-width: 360px;
+  }
+
+  .search-wrap svg {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    pointer-events: none;
+  }
+
+  .search-input, .filter-select {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    color: var(--text);
+    border-radius: 8px;
+    outline: none;
+    transition: all var(--transition);
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 9px 12px 9px 36px;
+  }
+
+  .filter-select {
+    padding: 9px 32px 9px 12px;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    cursor: pointer;
+  }
+
+  .search-input:focus, .filter-select:focus {
+    border-color: rgba(255,255,255,0.25);
+    background: var(--accent-dim);
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.04);
+  }
+  body.light .search-input:focus, body.light .filter-select:focus {
+    border-color: rgba(0,0,0,0.25);
+    box-shadow: 0 0 0 2px rgba(0,0,0,0.04);
+  }
+
+  /* ── BUTTONS ── */
+  .btn {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 9px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--glass-border);
+    background: var(--glass);
+    color: var(--text);
+    cursor: pointer;
+    transition: all var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .btn:hover { border-color: var(--border-hover); background: var(--accent-dim); transform: translateY(-1px); }
+  .btn:active { transform: translateY(0); }
+
+  .btn-primary {
+    background: var(--text);
+    color: var(--bg);
+    border-color: var(--text);
+  }
+  .btn-primary:hover { opacity: 0.85; background: var(--text); }
+
+  .btn-danger {
+    border-color: rgba(239,68,68,0.3);
+    color: var(--red);
+  }
+  .btn-danger:hover { background: rgba(239,68,68,0.1); border-color: var(--red); }
+
+  .btn-green {
+    border-color: rgba(34,197,94,0.3);
+    color: var(--green);
+  }
+  .btn-green:hover { background: rgba(34,197,94,0.1); border-color: var(--green); }
+
+  /* ── TABLE ── */
+  .table-wrap {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    backdrop-filter: blur(12px);
+  }
+
+  .table-scroll {
+    overflow-x: auto;
+    max-height: calc(100vh - 340px);
+    overflow-y: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 800px;
+  }
+
+  thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--surface2);
+  }
+  body.light thead { background: #ebebeb; }
+
+  th {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 14px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    user-select: none;
+  }
+
+  th:first-child { width: 52px; text-align: center; }
+  th:last-child { width: 90px; text-align: center; }
+
+  td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text);
+    vertical-align: middle;
+    transition: background var(--transition);
+  }
+
+  td:first-child {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    text-align: center;
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  tbody tr {
+    transition: background var(--transition);
+  }
+  tbody tr:hover td { background: var(--accent-dim); }
+
+  /* ── EDITABLE CELLS ── */
+  [contenteditable="true"] {
+    outline: none;
+    border-radius: 4px;
+    padding: 4px 6px;
+    margin: -4px -6px;
+    transition: all var(--transition);
+    cursor: text;
+    min-width: 80px;
+    display: inline-block;
+  }
+  [contenteditable="true"]:focus {
+    background: var(--accent-dim);
+    box-shadow: 0 0 0 1px var(--border-hover);
+  }
+  [contenteditable="true"]:empty::before {
+    content: attr(data-placeholder);
+    color: var(--text-muted);
+    font-style: italic;
+    pointer-events: none;
+  }
+
+  .address-cell {
+    cursor: pointer;
+    color: var(--blue);
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    transition: text-decoration-color var(--transition);
+  }
+  .address-cell:hover { text-decoration-color: var(--blue); }
+
+  /* ── STATUS DROPDOWN ── */
+  .status-select {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    padding: 5px 10px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    background: transparent;
+    cursor: pointer;
+    outline: none;
+    transition: all var(--transition);
+    -webkit-appearance: none;
+    appearance: none;
+    text-align: center;
+  }
+
+  .status-select.interested {
+    color: var(--blue);
+    border-color: rgba(59,130,246,0.3);
+    background: rgba(59,130,246,0.08);
+  }
+  .status-select.callback {
+    color: var(--yellow);
+    border-color: rgba(234,179,8,0.3);
+    background: rgba(234,179,8,0.08);
+  }
+  .status-select.completed {
+    color: var(--green);
+    border-color: rgba(34,197,94,0.3);
+    background: rgba(34,197,94,0.08);
+  }
+
+  /* ── DATE PICKER CELL ── */
+  .date-cell input[type="date"] {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    color: var(--text);
+    padding: 4px 8px;
+    border-radius: 6px;
+    outline: none;
+    cursor: pointer;
+    transition: all var(--transition);
+  }
+  .date-cell input[type="date"]:focus {
+    border-color: var(--border-hover);
+  }
+
+  /* ── ACTION BUTTONS IN TABLE ── */
+  .action-cell { text-align: center; }
+
+  .del-btn {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    border: 1px solid rgba(239,68,68,0.2);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition);
+    font-size: 13px;
+  }
+  .del-btn:hover { color: var(--red); border-color: var(--red); background: rgba(239,68,68,0.1); }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    padding: 60px 20px;
+    text-align: center;
+  }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.4; }
+  .empty-text {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* ── REMINDER / COMPLETED SHEETS ── */
+  .section-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+  }
+  .section-tag.reminder { color: var(--yellow); background: rgba(234,179,8,0.1); border: 1px solid rgba(234,179,8,0.2); }
+  .section-tag.completed { color: var(--green); background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.2); }
+
+  /* ── INVOICE PAGE ── */
+  .invoice-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  @media(max-width: 768px) { .invoice-layout { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    backdrop-filter: blur(12px);
+  }
+
+  .card-title {
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 24px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .form-group { margin-bottom: 18px; }
+
+  .form-label {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 7px;
+  }
+
+  .form-input, .form-textarea, .form-select-full {
+    width: 100%;
+    font-family: var(--font-body);
+    font-size: 13px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 10px 14px;
+    outline: none;
+    transition: all var(--transition);
+  }
+
+  .form-textarea {
+    resize: vertical;
+    min-height: 90px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+
+  .form-select-full {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    cursor: pointer;
+  }
+
+  .form-input:focus, .form-textarea:focus, .form-select-full:focus {
+    border-color: var(--border-hover);
+    background: var(--accent-dim);
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.04);
+  }
+  body.light .form-input:focus, body.light .form-textarea:focus, body.light .form-select-full:focus {
+    box-shadow: 0 0 0 2px rgba(0,0,0,0.04);
+  }
+
+  /* ── INVOICE PREVIEW ── */
+  #invoice-preview {
+    background: #ffffff;
+    color: #111;
+    border-radius: var(--radius);
+    padding: 40px;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .inv-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 36px;
+    padding-bottom: 24px;
+    border-bottom: 2px solid #111;
+  }
+
+  .inv-logo { height: 48px; object-fit: contain; }
+
+  .inv-meta { text-align: right; }
+  .inv-title {
+    font-family: 'Syncopate', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #111;
+  }
+  .inv-number {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: #666;
+    margin-top: 4px;
+  }
+
+  .inv-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 32px;
+  }
+
+  .inv-section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #999;
+    margin-bottom: 6px;
+  }
+
+  .inv-section-value {
+    font-size: 14px;
+    color: #111;
+    font-weight: 500;
+    line-height: 1.6;
+  }
+
+  .inv-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 24px;
+  }
+
+  .inv-table th {
+    background: #111;
+    color: #fff;
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 10px 14px;
+    text-align: left;
+    position: static;
+  }
+
+  .inv-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #eee;
+    font-size: 13px;
+    color: #111;
+    background: transparent;
+  }
+
+  .inv-total-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 8px;
+  }
+
+  .inv-total-box {
+    background: #111;
+    color: #fff;
+    padding: 14px 24px;
+    border-radius: 8px;
+    display: flex;
+    gap: 40px;
+    align-items: center;
+  }
+
+  .inv-total-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .inv-total-value {
+    font-family: 'Syncopate', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  .inv-footer {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+    text-align: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: #999;
+    letter-spacing: 0.06em;
+  }
+
+  /* ── NOTIFICATION TOAST ── */
+  #toast-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+  }
+
+  .toast {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    max-width: 320px;
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(20px);
+    animation: slideToast 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    pointer-events: all;
+  }
+
+  @keyframes slideToast {
+    from { transform: translateX(110%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+  .toast.out { animation: slideToastOut 0.25s ease forwards; }
+
+  @keyframes slideToastOut {
+    to { transform: translateX(110%); opacity: 0; }
+  }
+
+  .toast-icon { font-size: 18px; margin-top: 1px; flex-shrink: 0; }
+  .toast-body { flex: 1; }
+
+  .toast-title {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 3px;
+  }
+
+  .toast-msg {
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.4;
+  }
+
+  /* ── MAP SECTION ── */
+  .map-section {
+    margin-top: 28px;
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .map-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .map-iframe-wrap {
+    height: 280px;
+    position: relative;
+  }
+
+  .map-iframe-wrap iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    filter: grayscale(1) invert(0.85) contrast(1.05);
+  }
+  body.light .map-iframe-wrap iframe { filter: grayscale(0.5); }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 10px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+  /* ── RESPONSIVE ── */
+  @media(max-width: 640px) {
+    main { padding: 16px; padding-top: calc(var(--navbar-h) + 16px); }
+    .nav-center { display: none; }
+    .page-title { font-size: 16px; }
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  /* ── MOBILE NAV ── */
+  .mobile-nav {
+    display: none;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    z-index: 999;
+    padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
+    justify-content: space-around;
+  }
+
+  @media(max-width: 640px) { .mobile-nav { display: flex; } }
+
+  .mob-nav-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    font-family: var(--font-mono);
+    font-size: 8px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 4px 12px;
+    border-radius: 8px;
+    border: none;
+    background: none;
+    transition: all var(--transition);
+  }
+  .mob-nav-btn span:first-child { font-size: 18px; }
+  .mob-nav-btn.active { color: var(--text); }
+
+  /* ── REMINDER ALERT ── */
+  .reminder-row td { border-left: 3px solid var(--yellow); }
+  .overdue-row td { border-left: 3px solid var(--red); }
+
+  /* ── HELPER ── */
+  .flex { display: flex; }
+  .gap-2 { gap: 8px; }
+  .ml-auto { margin-left: auto; }
+  .text-right { text-align: right; }
+
+  /* ── PRINT ── */
+  @media print {
+    nav, .toolbar, .page-header > div:last-child, #toast-container, .mobile-nav { display: none !important; }
+    main { padding: 0; margin: 0; }
+    #invoice-preview { box-shadow: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── NAVBAR ── -->
+<nav>
+  <div class="nav-left">
+    <img src="https://res.cloudinary.com/drlg1t6pk/image/upload/v1773920897/DFX-03_dnuaya.png" alt="DFX" class="nav-logo" onerror="this.style.display='none';document.getElementById('nav-fallback').style.display='block'">
+    <span id="nav-fallback" style="display:none;font-family:var(--font-display);font-size:18px;font-weight:700;letter-spacing:0.08em">DFX</span>
+    <div class="nav-divider"></div>
+    <span class="nav-brand">GMP System</span>
+  </div>
+
+  <div class="nav-center">
+    <button class="nav-btn active" data-page="main" onclick="showPage('main',this)">Main Sheet</button>
+    <button class="nav-btn" data-page="reminder" onclick="showPage('reminder',this)">
+      Reminders<span id="reminder-badge" class="badge" style="display:none">0</span>
+    </button>
+    <button class="nav-btn" data-page="completed" onclick="showPage('completed',this)">Completed</button>
+    <button class="nav-btn" data-page="invoice" onclick="showPage('invoice',this)">Invoice</button>
+  </div>
+
+  <div class="nav-right">
+    <button class="icon-btn" onclick="toggleTheme()" title="Toggle Theme" id="theme-toggle">🌙</button>
+    <button class="icon-btn" onclick="requestNotifPermission()" title="Enable Notifications">🔔</button>
+  </div>
+</nav>
+
+<!-- ── MAIN CONTENT ── -->
+<main>
+
+  <!-- ════════ MAIN SHEET ════════ -->
+  <div id="page-main" class="page active">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Main Sheet</div>
+        <div class="page-subtitle" id="main-subtitle">Loading…</div>
+      </div>
+      <div class="flex gap-2" style="flex-wrap:wrap">
+        <button class="btn btn-green" onclick="addRow()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add Lead
+        </button>
+        <button class="btn" onclick="exportCSV('main')">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export CSV
+        </button>
+      </div>
+    </div>
+
+    <div class="stats-row" id="main-stats"></div>
+
+    <div class="toolbar">
+      <div class="search-wrap">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input class="search-input" type="text" placeholder="Search brand, phone…" id="main-search" oninput="debounce(filterMain, 200)()">
+      </div>
+      <select class="filter-select" id="filter-status" onchange="filterMain()">
+        <option value="">All Status</option>
+        <option value="Interested">Interested</option>
+        <option value="Call Back">Call Back</option>
+        <option value="Completed">Completed</option>
+      </select>
+      <select class="filter-select" id="filter-type" onchange="filterMain()">
+        <option value="">All Types</option>
+        <option value="E-Commerce">E-Commerce</option>
+        <option value="Portfolio">Portfolio</option>
+        <option value="Landing Page">Landing Page</option>
+        <option value="Business">Business</option>
+        <option value="Blog">Blog</option>
+        <option value="SaaS">SaaS</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+
+    <div class="table-wrap">
+      <div class="table-scroll">
+        <table id="main-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Brand Name</th>
+              <th>Address</th>
+              <th>Phone</th>
+              <th>Website Type</th>
+              <th>Status</th>
+              <th>Callback Date</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="main-tbody"></tbody>
+        </table>
+      </div>
+      <div id="main-empty" class="empty-state" style="display:none">
+        <div class="empty-icon">📋</div>
+        <div class="empty-text">No leads found — add your first lead</div>
+      </div>
+    </div>
+
+    <div class="map-section">
+      <div class="map-header">📍 Location Map — Click any address to open in Google Maps</div>
+      <div class="map-iframe-wrap">
+        <iframe id="map-iframe" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d497698.99110239827!2d80.00898045!3d13.047492309999998!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a5265ea4f7d3361%3A0x6e61a70b6863d433!2sChennai%2C%20Tamil%20Nadu!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ REMINDER SHEET ════════ -->
+  <div id="page-reminder" class="page">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Reminders</div>
+        <div class="page-subtitle">Leads due for follow-up</div>
+      </div>
+      <div class="flex gap-2">
+        <button class="btn" onclick="exportCSV('reminder')">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export CSV
+        </button>
+      </div>
+    </div>
+    <div class="section-tag reminder">⏰ Callback Reminders Active</div>
+    <div class="table-wrap">
+      <div class="table-scroll">
+        <table id="reminder-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Brand Name</th>
+              <th>Address</th>
+              <th>Phone</th>
+              <th>Website Type</th>
+              <th>Callback Date</th>
+              <th>Days Overdue</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="reminder-tbody"></tbody>
+        </table>
+      </div>
+      <div id="reminder-empty" class="empty-state" style="display:none">
+        <div class="empty-icon">✅</div>
+        <div class="empty-text">No pending reminders</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ COMPLETED SHEET ════════ -->
+  <div id="page-completed" class="page">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Completed</div>
+        <div class="page-subtitle">Successfully closed leads</div>
+      </div>
+      <div class="flex gap-2">
+        <button class="btn" onclick="exportCSV('completed')">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export CSV
+        </button>
+      </div>
+    </div>
+    <div class="section-tag completed">🏆 Closed Deals</div>
+    <div class="table-wrap">
+      <div class="table-scroll">
+        <table id="completed-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Brand Name</th>
+              <th>Address</th>
+              <th>Phone</th>
+              <th>Website Type</th>
+              <th>Completed On</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="completed-tbody"></tbody>
+        </table>
+      </div>
+      <div id="completed-empty" class="empty-state" style="display:none">
+        <div class="empty-icon">🎯</div>
+        <div class="empty-text">No completed leads yet</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ INVOICE ════════ -->
+  <div id="page-invoice" class="page">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Invoice Generator</div>
+        <div class="page-subtitle">Create professional DFX invoices</div>
+      </div>
+    </div>
+
+    <div class="invoice-layout">
+      <div class="card">
+        <div class="card-title">Invoice Details</div>
+
+        <div class="form-group">
+          <label class="form-label">Invoice Number</label>
+          <input class="form-input" id="inv-number" type="text" placeholder="DFX-2024-001" oninput="updateInvoicePreview()">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Date</label>
+          <input class="form-input" id="inv-date" type="date" oninput="updateInvoicePreview()">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Client Brand Name</label>
+          <input class="form-input" id="inv-brand" type="text" placeholder="Acme Corp" oninput="updateInvoicePreview()">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Client Address</label>
+          <textarea class="form-textarea" id="inv-address" placeholder="123 Main Street&#10;City, State 600001" oninput="updateInvoicePreview()"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Service Description</label>
+          <input class="form-input" id="inv-service" type="text" placeholder="E-Commerce Website Development" oninput="updateInvoicePreview()">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Amount (₹)</label>
+          <input class="form-input" id="inv-amount" type="number" placeholder="25000" oninput="updateInvoicePreview()">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">GST (%)</label>
+          <input class="form-input" id="inv-gst" type="number" placeholder="18" value="18" oninput="updateInvoicePreview()">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Notes / Terms</label>
+          <textarea class="form-textarea" id="inv-notes" placeholder="Payment due within 7 days. UPI: dfx@upi" oninput="updateInvoicePreview()"></textarea>
+        </div>
+
+        <div class="flex gap-2" style="flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="printInvoice()">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            Print / Save PDF
+          </button>
+          <button class="btn" onclick="resetInvoice()">Reset</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="card-title" style="font-family:var(--font-mono);font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--text-muted);margin-bottom:12px">Preview</div>
+        <div id="invoice-preview">
+          <div class="inv-header">
+            <img src="https://res.cloudinary.com/drlg1t6pk/image/upload/v1773920897/DFX-03_dnuaya.png" alt="DFX" class="inv-logo">
+            <div class="inv-meta">
+              <div class="inv-title">INVOICE</div>
+              <div class="inv-number" id="prev-number">DFX-2024-001</div>
+              <div class="inv-number" id="prev-date" style="margin-top:2px"></div>
+            </div>
+          </div>
+          <div class="inv-grid">
+            <div>
+              <div class="inv-section-label">From</div>
+              <div class="inv-section-value">
+                <strong>DFX Digital Agency</strong><br>
+                Chennai, Tamil Nadu<br>
+                India — 600001<br>
+                contact@dfx.in
+              </div>
+            </div>
+            <div>
+              <div class="inv-section-label">Bill To</div>
+              <div class="inv-section-value" id="prev-client">—</div>
+            </div>
+          </div>
+          <table class="inv-table">
+            <thead>
+              <tr>
+                <th>Service</th>
+                <th style="text-align:right">Amount</th>
+              </tr>
+            </thead>
+            <tbody id="prev-items">
+              <tr><td>—</td><td style="text-align:right">₹0.00</td></tr>
+            </tbody>
+          </table>
+          <div id="prev-gst-row" style="text-align:right;font-family:'Space Mono',monospace;font-size:11px;color:#666;margin-bottom:8px"></div>
+          <div class="inv-total-row">
+            <div class="inv-total-box">
+              <span class="inv-total-label">Total Due</span>
+              <span class="inv-total-value" id="prev-total">₹0</span>
+            </div>
+          </div>
+          <div id="prev-notes" class="inv-footer" style="margin-top:28px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ── MOBILE NAV ── -->
+<div class="mobile-nav">
+  <button class="mob-nav-btn active" data-page="main" onclick="showPage('main',this)"><span>📋</span><span>Main</span></button>
+  <button class="mob-nav-btn" data-page="reminder" onclick="showPage('reminder',this)"><span>⏰</span><span>Remind</span></button>
+  <button class="mob-nav-btn" data-page="completed" onclick="showPage('completed',this)"><span>✅</span><span>Done</span></button>
+  <button class="mob-nav-btn" data-page="invoice" onclick="showPage('invoice',this)"><span>🧾</span><span>Invoice</span></button>
+</div>
+
+<!-- ── TOAST CONTAINER ── -->
+<div id="toast-container"></div>
+
+<script>
+// ═══════════════════════════════════════════════════
+//  DFX GMP — LEAD MANAGEMENT SYSTEM
+// ═══════════════════════════════════════════════════
+
+// ─── DATA STORE ───────────────────────────────────
+const DB = {
+  keys: { main: 'dfx_main', reminder: 'dfx_reminder', completed: 'dfx_completed', theme: 'dfx_theme', invNum: 'dfx_invnum' },
+  get(k) { try { return JSON.parse(localStorage.getItem(this.keys[k]) || '[]'); } catch { return []; } },
+  set(k, v) { try { localStorage.setItem(this.keys[k], JSON.stringify(v)); } catch {} },
+  getStr(k) { return localStorage.getItem(this.keys[k]); },
+  setStr(k, v) { localStorage.setItem(this.keys[k], v); }
+};
+
+let mainData = [];
+let reminderData = [];
+let completedData = [];
+let filterTimeout = null;
+
+// ─── INIT ──────────────────────────────────────────
+function init() {
+  mainData = DB.get('main');
+  reminderData = DB.get('reminder');
+  completedData = DB.get('completed');
+
+  // Migrate old data without IDs
+  [...mainData, ...reminderData, ...completedData].forEach(r => { if (!r.id) r.id = uid(); });
+
+  applyTheme();
+  renderMainTable();
+  renderReminderTable();
+  renderCompletedTable();
+  updateStats();
+  updateReminderBadge();
+  initInvoiceDefaults();
+  startReminderCheck();
+  requestNotifPermission();
+  updateInvoicePreview();
+}
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+function today() { return new Date().toISOString().split('T')[0]; }
+
+function plusDays(n) {
+  const d = new Date();
+  d.setDate(d.getDate() + n);
+  return d.toISOString().split('T')[0];
+}
+
+function formatDate(s) {
+  if (!s) return '—';
+  const d = new Date(s);
+  if (isNaN(d)) return s;
+  return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function daysDiff(dateStr) {
+  if (!dateStr) return null;
+  const now = new Date(); now.setHours(0,0,0,0);
+  const target = new Date(dateStr);
+  return Math.floor((now - target) / 86400000);
+}
+
+// ─── PAGE NAVIGATION ──────────────────────────────
+function showPage(page, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelectorAll('.nav-btn,.mob-nav-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll(`[data-page="${page}"]`).forEach(b => b.classList.add('active'));
+  if (page === 'reminder') { renderReminderTable(); }
+  if (page === 'completed') { renderCompletedTable(); }
+}
+
+// ─── THEME ─────────────────────────────────────────
+function applyTheme() {
+  const light = DB.getStr('theme') === 'light';
+  document.body.classList.toggle('light', light);
+  document.getElementById('theme-toggle').textContent = light ? '☀️' : '🌙';
+}
+
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light');
+  DB.setStr('theme', isLight ? 'light' : 'dark');
+  document.getElementById('theme-toggle').textContent = isLight ? '☀️' : '🌙';
+}
+
+// ─── STATS ─────────────────────────────────────────
+function updateStats() {
+  const interested = mainData.filter(r => r.status === 'Interested').length;
+  const callback = mainData.filter(r => r.status === 'Call Back').length;
+  const completed = completedData.length;
+  const reminders = reminderData.length;
+
+  document.getElementById('main-stats').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-label">Total Leads</div>
+      <div class="stat-value">${mainData.length}</div>
+    </div>
+    <div class="stat-card blue">
+      <div class="stat-label">Interested</div>
+      <div class="stat-value">${interested}</div>
+    </div>
+    <div class="stat-card yellow">
+      <div class="stat-label">Call Back</div>
+      <div class="stat-value">${callback}</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-label">Completed</div>
+      <div class="stat-value">${completed}</div>
+    </div>
+    <div class="stat-card red">
+      <div class="stat-label">Reminders</div>
+      <div class="stat-value">${reminders}</div>
+    </div>
+  `;
+
+  const total = mainData.length;
+  document.getElementById('main-subtitle').textContent = `${total} lead${total !== 1 ? 's' : ''} · Last updated ${new Date().toLocaleTimeString('en-IN')}`;
+}
+
+function updateReminderBadge() {
+  const badge = document.getElementById('reminder-badge');
+  const count = reminderData.length;
+  badge.textContent = count;
+  badge.style.display = count > 0 ? 'inline-flex' : 'none';
+}
+
+// ─── MAIN TABLE RENDER ─────────────────────────────
+function renderMainTable(rows) {
+  const data = rows || mainData;
+  const tbody = document.getElementById('main-tbody');
+  const empty = document.getElementById('main-empty');
+
+  if (data.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = data.map((row, i) => buildMainRow(row, i + 1, !rows)).join('');
+}
+
+function buildMainRow(row, serial, interactive) {
+  const statusClass = { 'Interested': 'interested', 'Call Back': 'callback', 'Completed': 'completed' }[row.status] || 'interested';
+  const dateHtml = row.status === 'Call Back'
+    ? `<div class="date-cell"><input type="date" value="${row.callbackDate || ''}" onchange="updateCallbackDate('${row.id}',this.value)"></div>`
+    : `<span style="color:var(--text-muted);font-size:11px;font-family:var(--font-mono)">${row.status === 'Completed' ? '✔' : '—'}</span>`;
+
+  return `
+    <tr id="row-${row.id}">
+      <td>${serial}</td>
+      <td>
+        <span contenteditable="${interactive}" data-placeholder="Brand name" onblur="updateField('${row.id}','brand',this.textContent)" onfocus="selectAll(this)">${esc(row.brand)}</span>
+      </td>
+      <td>
+        <span class="address-cell" contenteditable="${interactive}" data-placeholder="Address" onblur="updateField('${row.id}','address',this.textContent)" onfocus="selectAll(this)" ondblclick="openMaps('${esc(row.address)}')">${esc(row.address)}</span>
+      </td>
+      <td>
+        <span contenteditable="${interactive}" data-placeholder="Phone" onblur="updatePhone('${row.id}',this)" onfocus="selectAll(this)">${esc(row.phone)}</span>
+      </td>
+      <td>
+        <span contenteditable="${interactive}" data-placeholder="Type" onblur="updateField('${row.id}','websiteType',this.textContent)" onfocus="selectAll(this)">${esc(row.websiteType)}</span>
+      </td>
+      <td>
+        <select class="status-select ${statusClass}" onchange="updateStatus('${row.id}',this.value,this)">
+          <option ${row.status==='Interested'?'selected':''}>Interested</option>
+          <option ${row.status==='Call Back'?'selected':''}>Call Back</option>
+          <option ${row.status==='Completed'?'selected':''}>Completed</option>
+        </select>
+      </td>
+      <td>${dateHtml}</td>
+      <td class="action-cell">
+        <button class="del-btn" onclick="deleteRow('${row.id}')" title="Delete">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        </button>
+      </td>
+    </tr>`;
+}
+
+function esc(s) { return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function selectAll(el) { const r = document.createRange(); r.selectNodeContents(el); const s = window.getSelection(); s.removeAllRanges(); s.addRange(r); }
+
+// ─── REMINDER TABLE ────────────────────────────────
+function renderReminderTable() {
+  const tbody = document.getElementById('reminder-tbody');
+  const empty = document.getElementById('reminder-empty');
+
+  if (reminderData.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = reminderData.map((row, i) => {
+    const diff = daysDiff(row.callbackDate);
+    const overdue = diff !== null && diff > 0;
+    const daysText = diff !== null ? (diff === 0 ? 'Today' : diff > 0 ? `${diff}d overdue` : `In ${Math.abs(diff)}d`) : '—';
+    return `
+      <tr class="${overdue ? 'overdue-row' : ''}">
+        <td>${i + 1}</td>
+        <td>${esc(row.brand)}</td>
+        <td><span class="address-cell" onclick="openMaps('${esc(row.address)}')">${esc(row.address)}</span></td>
+        <td>${esc(row.phone)}</td>
+        <td>${esc(row.websiteType)}</td>
+        <td><span style="font-family:var(--font-mono);font-size:11px">${formatDate(row.callbackDate)}</span></td>
+        <td><span style="font-family:var(--font-mono);font-size:11px;color:${overdue?'var(--red)':'var(--yellow)'}">${daysText}</span></td>
+        <td class="action-cell">
+          <div class="flex gap-2" style="justify-content:center">
+            <button class="btn btn-green" style="padding:5px 10px;font-size:9px" onclick="moveToMain('${row.id}')">↩ Main</button>
+            <button class="del-btn" onclick="deleteReminder('${row.id}')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+            </button>
+          </div>
+        </td>
+      </tr>`;
+  }).join('');
+}
+
+// ─── COMPLETED TABLE ───────────────────────────────
+function renderCompletedTable() {
+  const tbody = document.getElementById('completed-tbody');
+  const empty = document.getElementById('completed-empty');
+
+  if (completedData.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = completedData.map((row, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td>${esc(row.brand)}</td>
+      <td><span class="address-cell" onclick="openMaps('${esc(row.address)}')">${esc(row.address)}</span></td>
+      <td>${esc(row.phone)}</td>
+      <td>${esc(row.websiteType)}</td>
+      <td><span style="font-family:var(--font-mono);font-size:11px">${formatDate(row.completedOn || today())}</span></td>
+      <td class="action-cell">
+        <div class="flex gap-2" style="justify-content:center">
+          <button class="btn" style="padding:5px 10px;font-size:9px" onclick="moveCompletedToMain('${row.id}')">↩ Main</button>
+          <button class="del-btn" onclick="deleteCompleted('${row.id}')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+          </button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+// ─── ADD ROW ───────────────────────────────────────
+function addRow() {
+  const row = {
+    id: uid(),
+    brand: '',
+    address: '',
+    phone: '',
+    websiteType: '',
+    status: 'Interested',
+    callbackDate: '',
+    createdAt: today()
+  };
+  mainData.push(row);
+  save('main');
+  renderMainTable();
+  updateStats();
+
+  // Focus new row
+  setTimeout(() => {
+    const tr = document.getElementById('row-' + row.id);
+    if (tr) {
+      const cell = tr.querySelector('[contenteditable]');
+      if (cell) { cell.focus(); selectAll(cell); }
+      tr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, 50);
+
+  toast('✨', 'New Lead Added', 'Fill in the details inline');
+}
+
+// ─── UPDATE FIELDS ─────────────────────────────────
+function updateField(id, field, value) {
+  const row = mainData.find(r => r.id === id);
+  if (!row) return;
+  row[field] = value.trim();
+  save('main');
+  updateStats();
+}
+
+function updatePhone(id, el) {
+  const val = el.textContent.trim();
+  if (val && !/^[+\d\s\-()]{7,15}$/.test(val)) {
+    el.style.color = 'var(--red)';
+    toast('⚠️', 'Invalid Phone', 'Enter a valid phone number');
+    return;
+  }
+  el.style.color = '';
+  updateField(id, 'phone', val);
+}
+
+function updateCallbackDate(id, val) {
+  const row = mainData.find(r => r.id === id);
+  if (!row) return;
+  row.callbackDate = val;
+  save('main');
+}
+
+function updateStatus(id, newStatus, selectEl) {
+  const row = mainData.find(r => r.id === id);
+  if (!row) return;
+
+  const oldStatus = row.status;
+  row.status = newStatus;
+
+  // Update select styling
+  selectEl.className = 'status-select ' + ({ 'Interested': 'interested', 'Call Back': 'callback', 'Completed': 'completed' }[newStatus] || 'interested');
+
+  if (newStatus === 'Call Back') {
+    if (!row.callbackDate) row.callbackDate = plusDays(30);
+    save('main');
+    renderMainTable();
+    updateStats();
+  } else if (newStatus === 'Completed') {
+    // Move to completed
+    row.completedOn = today();
+    completedData.push({ ...row });
+    mainData = mainData.filter(r => r.id !== id);
+    save('main');
+    save('completed');
+    renderMainTable();
+    renderCompletedTable();
+    updateStats();
+    toast('🏆', 'Lead Completed!', `${row.brand || 'Lead'} moved to Completed sheet`);
+  } else {
+    save('main');
+    updateStats();
+  }
+}
+
+// ─── DELETE ────────────────────────────────────────
+function deleteRow(id) {
+  const row = mainData.find(r => r.id === id);
+  if (!row) return;
+  if (!confirm(`Delete "${row.brand || 'this lead'}"?`)) return;
+  mainData = mainData.filter(r => r.id !== id);
+  save('main');
+  renderMainTable();
+  updateStats();
+  toast('🗑️', 'Lead Deleted', 'Row removed successfully');
+}
+
+function deleteReminder(id) {
+  reminderData = reminderData.filter(r => r.id !== id);
+  save('reminder');
+  renderReminderTable();
+  updateReminderBadge();
+  updateStats();
+}
+
+function deleteCompleted(id) {
+  completedData = completedData.filter(r => r.id !== id);
+  save('completed');
+  renderCompletedTable();
+  updateStats();
+}
+
+// ─── MOVE BETWEEN SHEETS ───────────────────────────
+function moveToMain(id) {
+  const row = reminderData.find(r => r.id === id);
+  if (!row) return;
+  row.status = 'Interested';
+  row.callbackDate = '';
+  mainData.push({ ...row });
+  reminderData = reminderData.filter(r => r.id !== id);
+  save('main');
+  save('reminder');
+  renderReminderTable();
+  renderMainTable();
+  updateStats();
+  updateReminderBadge();
+  toast('↩️', 'Moved to Main', `${row.brand} returned to Main Sheet`);
+}
+
+function moveCompletedToMain(id) {
+  const row = completedData.find(r => r.id === id);
+  if (!row) return;
+  row.status = 'Interested';
+  delete row.completedOn;
+  mainData.push({ ...row });
+  completedData = completedData.filter(r => r.id !== id);
+  save('main');
+  save('completed');
+  renderCompletedTable();
+  renderMainTable();
+  updateStats();
+  toast('↩️', 'Moved to Main', `${row.brand} returned to Main Sheet`);
+}
+
+// ─── SAVE ──────────────────────────────────────────
+function save(type) {
+  if (type === 'main') DB.set('main', mainData);
+  else if (type === 'reminder') DB.set('reminder', reminderData);
+  else if (type === 'completed') DB.set('completed', completedData);
+}
+
+// ─── FILTER & SEARCH ──────────────────────────────
+const debounce = (fn, delay) => {
+  let t;
+  return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), delay); };
+};
+
+function filterMain() {
+  const q = document.getElementById('main-search').value.toLowerCase().trim();
+  const status = document.getElementById('filter-status').value;
+  const type = document.getElementById('filter-type').value;
+
+  let filtered = mainData;
+
+  if (q) filtered = filtered.filter(r =>
+    (r.brand || '').toLowerCase().includes(q) ||
+    (r.phone || '').toLowerCase().includes(q) ||
+    (r.address || '').toLowerCase().includes(q)
+  );
+  if (status) filtered = filtered.filter(r => r.status === status);
+  if (type) filtered = filtered.filter(r => (r.websiteType || '').toLowerCase() === type.toLowerCase());
+
+  renderMainTable(filtered);
+}
+
+// ─── REMINDER CHECK ────────────────────────────────
+function startReminderCheck() {
+  checkReminders();
+  setInterval(checkReminders, 60000); // Every minute
+}
+
+function checkReminders() {
+  const t = today();
+  const toMove = mainData.filter(r => r.status === 'Call Back' && r.callbackDate && r.callbackDate <= t);
+
+  if (toMove.length === 0) return;
+
+  toMove.forEach(row => {
+    // Check not already in reminder
+    if (!reminderData.find(r => r.id === row.id)) {
+      reminderData.push({ ...row });
+      showNotification(`Reminder: ${row.brand || 'Lead'}`, `Callback due for ${row.brand}`);
+      toast('⏰', 'Reminder Triggered!', `${row.brand || 'A lead'} is due for callback`);
+    }
+    mainData = mainData.filter(r => r.id !== row.id);
+  });
+
+  if (toMove.length > 0) {
+    save('main');
+    save('reminder');
+    renderMainTable();
+    renderReminderTable();
+    updateStats();
+    updateReminderBadge();
+  }
+}
+
+// ─── NOTIFICATIONS ─────────────────────────────────
+function requestNotifPermission() {
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+}
+
+function showNotification(title, body) {
+  if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification(title, { body, icon: 'https://res.cloudinary.com/drlg1t6pk/image/upload/v1773920897/DFX-03_dnuaya.png' });
+  }
+}
+
+// ─── TOAST ─────────────────────────────────────────
+function toast(icon, title, msg, duration = 4000) {
+  const container = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.innerHTML = `<div class="toast-icon">${icon}</div><div class="toast-body"><div class="toast-title">${title}</div><div class="toast-msg">${msg}</div></div>`;
+  container.appendChild(el);
+
+  setTimeout(() => {
+    el.classList.add('out');
+    setTimeout(() => el.remove(), 280);
+  }, duration);
+}
+
+// ─── MAPS ──────────────────────────────────────────
+function openMaps(address) {
+  if (!address) return;
+  const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+  window.open(url, '_blank');
+}
+
+// ─── EXPORT CSV ────────────────────────────────────
+function exportCSV(type) {
+  let data, filename, headers;
+  if (type === 'main') {
+    data = mainData;
+    filename = 'dfx_main_sheet.csv';
+    headers = ['#', 'Brand', 'Address', 'Phone', 'Website Type', 'Status', 'Callback Date'];
+  } else if (type === 'reminder') {
+    data = reminderData;
+    filename = 'dfx_reminders.csv';
+    headers = ['#', 'Brand', 'Address', 'Phone', 'Website Type', 'Callback Date'];
+  } else {
+    data = completedData;
+    filename = 'dfx_completed.csv';
+    headers = ['#', 'Brand', 'Address', 'Phone', 'Website Type', 'Completed On'];
+  }
+
+  if (data.length === 0) { toast('ℹ️', 'No Data', 'Nothing to export'); return; }
+
+  const rows = data.map((r, i) => {
+    const base = [i+1, r.brand, r.address, r.phone, r.websiteType];
+    if (type === 'main') return [...base, r.status, r.callbackDate].map(csvCell);
+    if (type === 'reminder') return [...base, r.callbackDate].map(csvCell);
+    return [...base, r.completedOn].map(csvCell);
+  });
+
+  const csv = [headers.map(csvCell), ...rows].map(r => r.join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+  toast('📥', 'CSV Downloaded', filename);
+}
+
+function csvCell(v) {
+  const s = String(v || '');
+  return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g,'""')}"` : s;
+}
+
+// ─── INVOICE ───────────────────────────────────────
+function initInvoiceDefaults() {
+  document.getElementById('inv-date').value = today();
+  const n = parseInt(DB.getStr('invNum') || '0') + 1;
+  document.getElementById('inv-number').value = `DFX-${new Date().getFullYear()}-${String(n).padStart(3,'0')}`;
+  DB.setStr('invNum', String(n));
+}
+
+function updateInvoicePreview() {
+  const num = document.getElementById('inv-number').value;
+  const date = document.getElementById('inv-date').value;
+  const brand = document.getElementById('inv-brand').value;
+  const address = document.getElementById('inv-address').value;
+  const service = document.getElementById('inv-service').value;
+  const amount = parseFloat(document.getElementById('inv-amount').value) || 0;
+  const gst = parseFloat(document.getElementById('inv-gst').value) || 0;
+  const notes = document.getElementById('inv-notes').value;
+
+  document.getElementById('prev-number').textContent = num || 'DFX-2024-001';
+  document.getElementById('prev-date').textContent = date ? formatDate(date) : '';
+  document.getElementById('prev-client').innerHTML = brand
+    ? `<strong>${brand}</strong><br>${address.replace(/\n/g,'<br>')}` : '—';
+
+  const gstAmt = (amount * gst) / 100;
+  const total = amount + gstAmt;
+
+  document.getElementById('prev-items').innerHTML = service
+    ? `<tr><td>${service}</td><td style="text-align:right">₹${amount.toLocaleString('en-IN', {minimumFractionDigits:2})}</td></tr>`
+    : `<tr><td>—</td><td style="text-align:right">₹0.00</td></tr>`;
+
+  const gstRow = document.getElementById('prev-gst-row');
+  if (gst > 0 && amount > 0) {
+    gstRow.innerHTML = `GST (${gst}%): <strong>₹${gstAmt.toLocaleString('en-IN',{minimumFractionDigits:2})}</strong>`;
+    gstRow.style.display = 'block';
+  } else {
+    gstRow.style.display = 'none';
+  }
+
+  document.getElementById('prev-total').textContent = `₹${total.toLocaleString('en-IN',{minimumFractionDigits:0})}`;
+  document.getElementById('prev-notes').textContent = notes || '';
+}
+
+function printInvoice() {
+  const brand = document.getElementById('inv-brand').value;
+  if (!brand) { toast('⚠️', 'Missing Details', 'Please fill in at least the client name'); return; }
+  window.print();
+}
+
+function resetInvoice() {
+  document.getElementById('inv-brand').value = '';
+  document.getElementById('inv-address').value = '';
+  document.getElementById('inv-service').value = '';
+  document.getElementById('inv-amount').value = '';
+  document.getElementById('inv-gst').value = '18';
+  document.getElementById('inv-notes').value = '';
+  document.getElementById('inv-date').value = today();
+  updateInvoicePreview();
+}
+
+// ─── SERVICE WORKER (PWA) ──────────────────────────
+function registerSW() {
+  if (!('serviceWorker' in navigator)) return;
+  const sw = `
+    const CACHE = 'dfx-gmp-v1';
+    const ASSETS = ['/'];
+    self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS))); self.skipWaiting(); });
+    self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))); self.clients.claim(); });
+    self.addEventListener('fetch', e => { e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).catch(() => caches.match('/')))); });
+  `;
+  const blob = new Blob([sw], { type: 'application/javascript' });
+  navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(() => {});
+}
+
+// ─── KEYBOARD SHORTCUTS ────────────────────────────
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { addRow(); e.preventDefault(); }
+});
+
+// ─── BOOT ──────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  init();
+  registerSW();
+});
+</script>
+</body>
+</html>
